@@ -6,31 +6,53 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 FaceGazeSynth is a synthetic face generation system that produces realistic eye gaze using physics-based modeling. The goal is to generate faces with controlled gaze angles (0° to ±30°) that look realistic by getting the optics right — particularly corneal refraction, which is why AI-generated gaze typically looks "dead."
 
-## Architecture (3-Phase Plan)
+## Build and Run Commands
 
-**Phase 1 — Physics-Based Eyeball Model (current focus)**
-- Two eyeballs rendered at precise gaze angles (0°, ±5°, ±10°, ±15°, ±20°, ±30°)
-- Composite geometry: sclera (~24mm sphere), cornea (7.8mm radius dome, protruding ~2.5mm), iris (12mm disc, 3.6mm behind corneal apex), pupil (3–4mm aperture)
-- Corneal refraction via Snell's law (refractive index 1.376) — iris is seen *through* the cornea, producing magnification (~4–8%) and asymmetric distortion at off-axis angles
-- Eye rotates around a center 13.5mm behind corneal apex
-- Two implementation paths considered: (A) custom Python ray tracer (numpy/PIL/matplotlib), (B) Blender Python API (bpy) with Cycles renderer
+```bash
+# Install (use the project .venv)
+.venv/bin/pip install -e ".[dev]"
 
-**Phase 2 — Face Integration**
-- Embed eyeballs into parametric face mesh (FLAME or Basel Face Model)
-- Eyelid geometry, eye socket shadowing, tear film details
-- Interpupillary distance ~63mm
+# Run tests
+.venv/bin/pytest -v
 
-**Phase 3 — Diverse Faces with Emotions**
-- Identity variation (demographics) and expression parameters
-- Emotion mapping via FACS (Facial Action Coding System)
-- Eyeball model stays fixed; face deforms around it
+# Render a single eye
+.venv/bin/python scripts/render_single.py --theta-h 20 --resolution 512 --output output/eye.png
+
+# Render full gaze sweep (stereo pairs at all target angles)
+.venv/bin/python scripts/render_sweep.py --resolution 256
+
+# Run validation suite (iris displacement vs. theory)
+.venv/bin/python scripts/validate.py --diagnostics
+```
+
+## Architecture
+
+**Phase 1 — Custom Python Ray Tracer (implemented)**
+
+The renderer traces rays through a composite eyeball geometry with corneal refraction:
+
+- `facegazesynth/eye_model/` — Eyeball geometry and physical constants. `geometry.py` builds the composite model (sclera sphere + cornea cap + iris plane). `parameters.py` holds all physical constants as a frozen dataclass. `rotation.py` rotates geometry around the anatomical rotation center (13.5mm behind corneal apex, NOT the sclera center).
+
+- `facegazesynth/optics/` — Core physics. `intersections.py` handles ray-sphere and ray-plane intersection (vectorized with numpy). `refraction.py` implements 3D Snell's law. All operations are batched (N,3) arrays for performance.
+
+- `facegazesynth/rendering/` — Camera, lighting, and main render loop. `renderer.py` orchestrates: test cornea cap → refract → iris plane; test sclera; apply materials. The cornea cap vs. sclera is determined by whether the hit point falls within the limbus circle (intersection of two spheres).
+
+- `facegazesynth/materials/` — Procedural iris texture (radial fibers, collarette, crypts), sclera shading, corneal specular (Purkinje image), limbus darkening.
+
+- `facegazesynth/pipeline/` — High-level: `single_eye.py`, `stereo_pair.py` (two mirror-image eyes at 63mm IPD), `sweep.py` (render all target angles).
+
+- `facegazesynth/validation/` — Measures apparent iris displacement from rendered images and compares against theoretical predictions with/without corneal refraction.
+
+**Key physics simplification:** Single-surface Gullstrand model — cornea treated as one refracting surface (air n=1.0 → aqueous n=1.336), ignoring 0.5mm cornea thickness.
+
+**Phase 2 — Face Integration (not yet started)**
+Embed eyeballs into parametric face mesh (FLAME or Basel Face Model).
+
+**Phase 3 — Diverse Faces with Emotions (not yet started)**
+Identity variation + expression parameters via FACS.
 
 ## Key Physics
 
-The critical rendering challenge is **corneal refraction**. Camera rays hitting the cornea must be refracted before intersecting the iris plane. At off-axis gaze angles, refraction is asymmetric (near vs. far iris edge magnified differently). The specular highlight (Purkinje image) on the cornea is also an important gaze direction cue.
+The critical rendering challenge is **corneal refraction**. Camera rays hitting the cornea must be refracted (Snell's law at the curved corneal surface) before intersecting the iris plane. At off-axis gaze angles, refraction is asymmetric. The specular highlight (Purkinje image) on the cornea is also an important gaze direction cue.
 
-Validation target: rendered iris displacement vs. gaze angle should match published empirical curves (Daugman et al.).
-
-## Project Status
-
-This project is in early stages. See [Idea.md](Idea.md) for the full specification and technical rationale.
+Validation: rendered iris displacement vs. gaze angle matches refraction-corrected theory (RMS < 0.5mm) and clearly diverges from the naive no-refraction prediction.
