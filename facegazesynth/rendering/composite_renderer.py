@@ -24,6 +24,8 @@ def render_composite(
     skin_base_color: np.ndarray = None,
     eye_supersample: int = 4,
     pixel_size_mm: float = None,
+    albedo_texture: np.ndarray = None,
+    albedo_model=None,
 ) -> np.ndarray:
     """Render composite scene with face mesh and two eyes.
 
@@ -35,9 +37,12 @@ def render_composite(
         bg_color: Background color RGB (0-1).
         n_air: Refractive index of air.
         n_aqueous: Refractive index of aqueous humor.
-        skin_base_color: (3,) skin color override.
+        skin_base_color: (3,) skin color override (procedural mode).
         eye_supersample: NxN subpixel samples per eye pixel (1 = off).
         pixel_size_mm: Physical pixel size in mm (needed for supersampling).
+        albedo_texture: (512, 512, 3) sampled albedo texture. If provided,
+            uses UV-mapped albedo instead of procedural skin color.
+        albedo_model: Pre-loaded AlbedoModel for UV lookup.
 
     Returns:
         (N, 3) RGB image in [0, 1].
@@ -96,6 +101,17 @@ def render_composite(
             )
             face_normals = face_tm.face_normals[winning_tris]
 
+            # Look up albedo colors if texture is provided
+            pixel_albedo = None
+            if albedo_texture is not None:
+                from ..materials.albedo import lookup_albedo_at_triangles
+                # Map stripped-mesh triangle indices back to original FLAME
+                # face indices for correct UV lookup
+                orig_tris = scene.original_face_indices[winning_tris]
+                pixel_albedo = lookup_albedo_at_triangles(
+                    albedo_texture, orig_tris, bary, albedo_model,
+                )
+
             skin_colors = skin_color_at(
                 hit_points=winning_locs,
                 normals=face_normals,
@@ -106,6 +122,7 @@ def render_composite(
                 light_position=light.position,
                 light_intensity=light.intensity,
                 base_color=skin_base_color,
+                albedo_colors=pixel_albedo,
             )
 
             colors[winning_rays] = skin_colors

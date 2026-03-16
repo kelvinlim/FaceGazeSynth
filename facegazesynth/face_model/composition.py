@@ -19,6 +19,7 @@ class CompositeScene:
     left_eye: EyeballGeometry
     right_eye: EyeballGeometry
     face_vertex_normals: np.ndarray  # (N, 3) for smooth shading
+    original_face_indices: np.ndarray  # (F,) maps stripped faces to original FLAME
 
 
 def _mirror_geometry(geom: EyeballGeometry) -> EyeballGeometry:
@@ -77,18 +78,31 @@ def compose_face_with_eyes(
     Returns:
         CompositeScene with face trimesh and two positioned eyeball geometries.
     """
+    # Symmetrize eye joint positions — FLAME has slight L/R asymmetry that
+    # causes visually different corneal refraction between the two eyes.
+    # Average Y and Z so both eyes sit at the same depth and height;
+    # keep X (interpupillary distance) from FLAME.
+    right_joint = face_mesh.right_eye_joint.copy()
+    left_joint = face_mesh.left_eye_joint.copy()
+    avg_y = (right_joint[1] + left_joint[1]) / 2.0
+    avg_z = (right_joint[2] + left_joint[2]) / 2.0
+    right_joint[1] = avg_y
+    right_joint[2] = avg_z
+    left_joint[1] = avg_y
+    left_joint[2] = avg_z
+
     # Build right eye: rotate, then translate to FLAME's right eye joint
     right_geom = build_geometry(eye_params)
     if theta_h_deg != 0.0 or theta_v_deg != 0.0:
         right_geom = rotate_eye(right_geom, theta_h_deg, theta_v_deg)
-    right_geom = _shift_geometry(right_geom, face_mesh.right_eye_joint)
+    right_geom = _shift_geometry(right_geom, right_joint)
 
     # Build left eye: mirror first (left-eye anatomy), then rotate for conjugate gaze
     left_geom = build_geometry(eye_params)
     left_geom = _mirror_geometry(left_geom)
     if theta_h_deg != 0.0 or theta_v_deg != 0.0:
         left_geom = rotate_eye(left_geom, theta_h_deg, theta_v_deg)
-    left_geom = _shift_geometry(left_geom, face_mesh.left_eye_joint)
+    left_geom = _shift_geometry(left_geom, left_joint)
 
     # Build trimesh for ray intersection
     face_tm = trimesh.Trimesh(
@@ -102,4 +116,5 @@ def compose_face_with_eyes(
         left_eye=left_geom,
         right_eye=right_geom,
         face_vertex_normals=face_mesh.vertex_normals,
+        original_face_indices=face_mesh.original_face_indices,
     )

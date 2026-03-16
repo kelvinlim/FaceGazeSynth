@@ -18,10 +18,14 @@ def main():
     parser.add_argument("--betas", type=str, default=None, help="Identity coefficients as JSON array")
     parser.add_argument("--expression", type=str, default=None, help="Expression coefficients as JSON array")
     parser.add_argument("--jaw-pose", type=str, default=None, help="Jaw rotation as JSON array [rx, ry, rz]")
+    parser.add_argument("--emotion", type=str, default=None, help="Emotion preset (happy, sad, angry, etc.)")
+    parser.add_argument("--emotion-intensity", type=float, default=1.0, help="Emotion intensity (0-1)")
     parser.add_argument("--model-path", type=str, default=None, help="Path to FLAME model directory")
     parser.add_argument("--perspective", action="store_true", help="Use perspective camera")
     parser.add_argument("--focal-length", type=float, default=50.0, help="Focal length in mm (perspective only)")
     parser.add_argument("--camera-distance", type=float, default=500.0, help="Camera distance in mm (perspective only)")
+    parser.add_argument("--albedo", action="store_true", help="Use data-driven albedo texture")
+    parser.add_argument("--albedo-seed", type=int, default=None, help="Seed for albedo sampling")
     parser.add_argument("--output", type=str, default="output/face.png", help="Output path")
     args = parser.parse_args()
 
@@ -38,10 +42,14 @@ def main():
         betas=betas,
         expression=expression,
         jaw_pose=jaw_pose,
+        emotion=args.emotion,
+        emotion_intensity=args.emotion_intensity,
         model_path=args.model_path,
         perspective=args.perspective,
         focal_length=args.focal_length,
         camera_distance=args.camera_distance,
+        use_albedo=args.albedo,
+        albedo_seed=args.albedo_seed,
     )
     img.save(args.output)
     print(f"Saved to {args.output} ({img.width}x{img.height})")

@@ -27,8 +27,17 @@ FaceGazeSynth is a synthetic face generation system that produces realistic eye 
 # Render a face with perspective camera
 .venv/bin/python scripts/render_face.py --theta-h 10 --resolution 512 --perspective --output output/face_persp.png
 
-# Render face gaze sweep grid
+# Render face gaze sweep grid (with angle labels)
 .venv/bin/python scripts/render_face_sweep.py --resolution 128
+
+# Render custom angle series (e.g., ±20° in 5° steps)
+.venv/bin/python scripts/render_face_sweep.py --angles '[-20,-15,-10,-5,0,5,10,15,20]' --resolution 256
+
+# Render with emotion and albedo texture
+.venv/bin/python scripts/render_face.py --theta-h 10 --emotion happy --albedo --resolution 512
+
+# Generate batch: 5 identities × 5 emotions × 3 gaze angles
+.venv/bin/python scripts/generate_batch.py --n-identities 5 --resolution 256
 
 # Run validation suite (iris displacement vs. theory)
 .venv/bin/python scripts/validate.py --diagnostics
@@ -86,8 +95,15 @@ models/flame2023/
 ```
 Load with: `smplx.create(model_path='models/flame2023', model_type='flame')` → 5023 vertices, 110 joints.
 
-**Phase 3 — Diverse Faces with Emotions (not yet started)**
-Identity variation + expression parameters via FACS.
+**Phase 3 — Diverse Faces with Emotions (implemented)**
+
+- `facegazesynth/materials/albedo.py` — AlbedoMM PCA model loader (145 components), texture sampling with auto-scaled coefficients, UV-mapped per-pixel color lookup. BGR→RGB conversion.
+
+- `facegazesynth/face_model/expressions.py` — 8 emotion presets (neutral, happy, sad, angry, surprised, disgusted, fearful, contempt) mapped to FLAME expression + jaw_pose. `random_identity()` for shape sampling.
+
+- `facegazesynth/pipeline/batch.py` — Batch generation: identity × emotion × gaze combinations with JSON manifest. `scripts/generate_batch.py` CLI.
+
+**Albedo model:** `models/flame2023/albedoModel2020_FLAME_albedoPart.npz` (1.7GB, from AlbedoMM CVPR 2020, academic license). 512×512 texture space, 145 PCA components for diffuse + specular albedo.
 
 ## Key Physics
 

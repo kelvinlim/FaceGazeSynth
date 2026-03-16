@@ -70,12 +70,20 @@
 
 ## Phase 3 — Diverse Faces with Emotions
 
-**Status: Not started**
+**Status: Complete**
 
 | # | Milestone | Status | Completed |
 |---|-----------|--------|-----------|
-| 3.1 | Identity variation parameters (demographics, skin reflectance) | Not started | — |
-| 3.2 | Expression parameters via FACS (Facial Action Coding System) | Not started | — |
-| 3.3 | Emotion label mapping (happy, sad, angry, scornful, etc.) to AU blendshapes | Not started | — |
-| 3.4 | Verify gaze calibration is preserved through face deformation | Not started | — |
-| 3.5 | Batch generation pipeline for diverse face + gaze + emotion combinations | Not started | — |
+| 3.1 | Data-driven albedo texture (AlbedoMM PCA model, UV mapping, BGR→RGB) | Done | 2026-03-16 |
+| 3.2 | Emotion presets (8 emotions: neutral, happy, sad, angry, surprised, disgusted, fearful, contempt) | Done | 2026-03-16 |
+| 3.3 | Skin shader updated for albedo textures with procedural fallback | Done | 2026-03-16 |
+| 3.4 | Gaze calibration preserved through expression deformation (RMS 0.26mm with surprised) | Done | 2026-03-16 |
+| 3.5 | Batch generation pipeline (identity × emotion × gaze, JSON manifest) | Done | 2026-03-16 |
+
+### Key Results
+- AlbedoMM PCA model (145 components) for diverse skin appearance
+- 8 emotion presets mapped to FLAME expression + jaw_pose coefficients
+- Random identity sampling via FLAME betas
+- Gaze calibration RMS 0.26mm even with large expression deformation (surprised)
+- Batch pipeline generates identity × emotion × gaze grid with manifest.json
+- 68 tests passing (33 Phase 1 + 20 Phase 2 + 15 Phase 3)

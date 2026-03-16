@@ -1,4 +1,6 @@
-"""Face skin shader: Lambertian diffuse with position-based color variation."""
+"""Face skin shader: Lambertian diffuse with procedural or albedo texture color."""
+
+from typing import Optional
 
 import numpy as np
 
@@ -12,8 +14,9 @@ def skin_color_at(
     faces: np.ndarray,
     light_position: np.ndarray,
     light_intensity: float = 0.75,
-    base_color: np.ndarray = None,
+    base_color: Optional[np.ndarray] = None,
     ambient: float = 0.25,
+    albedo_colors: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """Shade face skin with smooth Lambertian diffuse lighting.
 
@@ -26,17 +29,15 @@ def skin_color_at(
         faces: (F, 3) face mesh triangle indices.
         light_position: (3,) light position in mm.
         light_intensity: Light intensity scalar.
-        base_color: (3,) RGB base skin color. Default warm skin tone.
+        base_color: (3,) RGB base skin color (procedural fallback).
         ambient: Ambient light level.
+        albedo_colors: (N, 3) per-pixel albedo from texture lookup.
+            If provided, overrides base_color and procedural variation.
 
     Returns:
         (N, 3) RGB colors in [0, 1].
     """
-    if base_color is None:
-        base_color = np.array([0.76, 0.60, 0.48])
-
     n = len(hit_points)
-    colors = np.zeros((n, 3))
 
     # Smooth normals via barycentric interpolation
     tri_verts = faces[triangle_indices]  # (N, 3) vertex indices
@@ -51,22 +52,24 @@ def skin_color_at(
     lengths = np.linalg.norm(smooth_normals, axis=1, keepdims=True)
     smooth_normals /= np.maximum(lengths, 1e-10)
 
-    # Subtle color variation by position (forehead lighter, cheeks rosier)
-    # Normalize Y position to [0, 1] range across the face
-    y_vals = hit_points[:, 1]
-    y_min, y_max = y_vals.min(), y_vals.max()
-    y_range = max(y_max - y_min, 1e-6)
-    y_norm = (y_vals - y_min) / y_range  # 0=bottom, 1=top
+    # Determine per-pixel color
+    if albedo_colors is not None:
+        local_color = albedo_colors
+    else:
+        if base_color is None:
+            base_color = np.array([0.76, 0.60, 0.48])
 
-    # Forehead (top): slightly lighter
-    # Cheeks (mid): slightly rosier
-    # Chin (bottom): slightly darker
-    variation = np.ones((n, 3))
-    variation[:, 0] += 0.04 * np.sin(y_norm * np.pi)  # red boost mid-face
-    variation[:, 1] -= 0.02 * (1.0 - y_norm)  # less green at bottom
-    variation[:, 2] -= 0.03 * (1.0 - y_norm)  # less blue at bottom
+        # Procedural variation by position
+        y_vals = hit_points[:, 1]
+        y_min, y_max = y_vals.min(), y_vals.max()
+        y_range = max(y_max - y_min, 1e-6)
+        y_norm = (y_vals - y_min) / y_range
 
-    local_color = base_color * variation
+        variation = np.ones((n, 3))
+        variation[:, 0] += 0.04 * np.sin(y_norm * np.pi)
+        variation[:, 1] -= 0.02 * (1.0 - y_norm)
+        variation[:, 2] -= 0.03 * (1.0 - y_norm)
+        local_color = base_color * variation
 
     # Lambertian diffuse
     to_light = light_position - hit_points

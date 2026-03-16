@@ -25,8 +25,9 @@ class FaceMesh:
     """Face mesh with eyeball vertices removed."""
 
     vertices: np.ndarray  # (N, 3) in mm
-    faces: np.ndarray  # (F, 3) triangle indices
+    faces: np.ndarray  # (F, 3) triangle indices (re-indexed)
     vertex_normals: np.ndarray  # (N, 3)
+    original_face_indices: np.ndarray  # (F,) maps to original FLAME face indices
     left_eye_joint: np.ndarray  # (3,) in mm
     right_eye_joint: np.ndarray  # (3,) in mm
     n_shape: int  # number of shape params used
@@ -63,9 +64,9 @@ def _remove_eyeball_vertices(
     The main face is the largest component.
 
     Returns:
-        (face_vertices, face_faces, kept_mask) — vertices and faces for
-        the main face component only, plus a boolean mask of which original
-        vertices were kept.
+        (face_vertices, face_faces, kept_mask, original_face_idx) — vertices
+        and faces for the main face component only, a boolean mask of which
+        original vertices were kept, and indices into the original face array.
     """
     n_verts = vertices.shape[0]
     rows = np.concatenate([faces[:, 0], faces[:, 1], faces[:, 2]])
@@ -85,9 +86,10 @@ def _remove_eyeball_vertices(
 
     # Filter faces: keep only faces where all 3 vertices are in main component
     face_kept = kept_mask[faces[:, 0]] & kept_mask[faces[:, 1]] & kept_mask[faces[:, 2]]
+    original_face_idx = np.where(face_kept)[0]
     new_faces = old_to_new[faces[face_kept]]
 
-    return vertices[kept_mask], new_faces, kept_mask
+    return vertices[kept_mask], new_faces, kept_mask, original_face_idx
 
 
 _cached_model = None
@@ -174,7 +176,7 @@ def build_face_mesh(
     left_eye_joint = joints_mm[4]
 
     # Remove eyeball submeshes
-    face_verts, face_faces, _ = _remove_eyeball_vertices(verts_mm, faces_all)
+    face_verts, face_faces, _, orig_face_idx = _remove_eyeball_vertices(verts_mm, faces_all)
 
     # Compute normals
     normals = _compute_vertex_normals(face_verts, face_faces)
@@ -183,6 +185,7 @@ def build_face_mesh(
         vertices=face_verts,
         faces=face_faces,
         vertex_normals=normals,
+        original_face_indices=orig_face_idx,
         left_eye_joint=left_eye_joint,
         right_eye_joint=right_eye_joint,
         n_shape=n_shape,
