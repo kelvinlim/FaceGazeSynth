@@ -33,18 +33,28 @@
 
 ---
 
-## Phase 2 — Face Integration
+## Phase 2 — Face Integration (FLAME 2023 Open)
 
-**Status: Not started**
+**Status: In progress**
 
 | # | Milestone | Status | Completed |
 |---|-----------|--------|-----------|
-| 2.1 | Select and integrate parametric face mesh (FLAME or Basel Face Model) | Not started | — |
-| 2.2 | Embed eyeballs at correct interpupillary distance (~63mm) and socket depth | Not started | — |
-| 2.3 | Eyelid geometry conforming to eyeball curvature | Not started | — |
-| 2.4 | Eye socket shadowing and occlusion | Not started | — |
-| 2.5 | Tear film and caruncle details | Not started | — |
-| 2.6 | Full face + gaze renders at all target angles | Not started | — |
+| 2.0 | FLAME model setup (download, smplx integration, landmark embedding) | Done | 2026-03-15 |
+| 2.1 | Dependencies & face_model module (smplx, trimesh, torch) | Not started | — |
+| 2.2 | FLAME mesh loader (build_face_mesh, eyeball vertex removal, eye joints) | Not started | — |
+| 2.3 | Eye-face composition (position eyeballs at FLAME eye joints) | Not started | — |
+| 2.4 | Face material / skin shader (Lambertian diffuse, smooth shading) | Not started | — |
+| 2.5 | Composite renderer (depth-buffer ray tracing: face mesh + eyes) | Not started | — |
+| 2.6 | Face rendering pipeline (render_face, render_face_sweep) | Not started | — |
+| 2.7 | Perspective camera (optional, alongside existing orthographic) | Not started | — |
+| 2.8 | Tests (mesh loading, eye positioning, composite rendering, validation) | Not started | — |
+| 2.9 | CLI scripts (render_face.py, render_face_sweep.py) | Not started | — |
+| 2.10 | Update validation for face-context renders | Not started | — |
+
+### Setup Notes
+- Using FLAME 2023 Open (CC-BY-4.0) — model files in `models/flame2023/`
+- Downloaded: `flame2023_Open.pkl`, `mediapipe_landmark_embedding.npz`
+- Verified: `smplx.create()` loads successfully → 5023 vertices, 110 joints
 
 ---
 

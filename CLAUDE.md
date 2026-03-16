@@ -45,8 +45,19 @@ The renderer traces rays through a composite eyeball geometry with corneal refra
 
 **Key physics simplification:** Single-surface Gullstrand model — cornea treated as one refracting surface (air n=1.0 → aqueous n=1.336), ignoring 0.5mm cornea thickness.
 
-**Phase 2 — Face Integration (not yet started)**
-Embed eyeballs into parametric face mesh (FLAME or Basel Face Model).
+**Phase 2 — Face Integration (in progress)**
+Embed eyeballs into FLAME 2023 Open parametric face mesh. See `PLAN.md` for full implementation plan.
+
+**FLAME model setup:** Model files live in `models/flame2023/`. The directory structure expected by `smplx`:
+```
+models/flame2023/
+├── flame2023_Open.pkl                          # Downloaded from flame.is.tue.mpg.de (CC-BY-4.0)
+├── mediapipe_landmark_embedding.npz            # Downloaded from flame.is.tue.mpg.de
+├── flame/
+│   ├── FLAME_NEUTRAL.pkl → ../flame2023_Open.pkl   # Symlink (smplx expects this name)
+│   └── flame_static_embedding.pkl                   # Converted from mediapipe_landmark_embedding.npz
+```
+Load with: `smplx.create(model_path='models/flame2023', model_type='flame')` → 5023 vertices, 110 joints.
 
 **Phase 3 — Diverse Faces with Emotions (not yet started)**
 Identity variation + expression parameters via FACS.
