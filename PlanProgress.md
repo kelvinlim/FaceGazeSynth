@@ -35,7 +35,7 @@
 
 ## Phase 2 — Face Integration (FLAME 2023 Open)
 
-**Status: In progress**
+**Status: Complete**
 
 | # | Milestone | Status | Completed |
 |---|-----------|--------|-----------|
@@ -46,10 +46,10 @@
 | 2.4 | Face material / skin shader (Lambertian diffuse, smooth shading) | Done | 2026-03-15 |
 | 2.5 | Composite renderer (depth-buffer ray tracing: face mesh + eyes) | Done | 2026-03-15 |
 | 2.6 | Face rendering pipeline (render_face, render_face_sweep) | Done | 2026-03-15 |
-| 2.7 | Perspective camera (optional, alongside existing orthographic) | Not started | — |
+| 2.7 | Perspective camera (optional, alongside existing orthographic) | Done | 2026-03-15 |
 | 2.8 | Tests (mesh loading, eye positioning, composite rendering: 53 total) | Done | 2026-03-15 |
 | 2.9 | CLI scripts (render_face.py, render_face_sweep.py) | Done | 2026-03-15 |
-| 2.10 | Update validation for face-context renders | Not started | — |
+| 2.10 | Update validation for face-context renders (RMS 0.381mm, PASS) | Done | 2026-03-15 |
 
 ### Key Results
 - Full face renders with FLAME 2023 Open mesh + physics-based eyeballs at 512px
@@ -58,6 +58,8 @@
 - Cornea cap boundary seam fixed (sclera normals used consistently across limbus)
 - Iris collarette and limbus darkening softened to remove artifactual rings
 - 53 tests passing (33 Phase 1 + 15 face model + 5 composite renderer)
+- Face-context iris displacement RMS 0.381mm (< 1.0mm threshold, PASS)
+- Perspective camera added (50mm focal length, natural foreshortening)
 
 ### Setup Notes
 - Using FLAME 2023 Open (CC-BY-4.0) — model files in `models/flame2023/`

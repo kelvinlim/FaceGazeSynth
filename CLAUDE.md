@@ -21,8 +21,20 @@ FaceGazeSynth is a synthetic face generation system that produces realistic eye 
 # Render full gaze sweep (stereo pairs at all target angles)
 .venv/bin/python scripts/render_sweep.py --resolution 256
 
+# Render a face with gaze (orthographic)
+.venv/bin/python scripts/render_face.py --theta-h 20 --resolution 512 --output output/face.png
+
+# Render a face with perspective camera
+.venv/bin/python scripts/render_face.py --theta-h 10 --resolution 512 --perspective --output output/face_persp.png
+
+# Render face gaze sweep grid
+.venv/bin/python scripts/render_face_sweep.py --resolution 128
+
 # Run validation suite (iris displacement vs. theory)
 .venv/bin/python scripts/validate.py --diagnostics
+
+# Run validation with face-context check
+.venv/bin/python scripts/validate.py --face-context
 ```
 
 ## Architecture

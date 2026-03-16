@@ -19,6 +19,9 @@ def main():
     parser.add_argument("--expression", type=str, default=None, help="Expression coefficients as JSON array")
     parser.add_argument("--jaw-pose", type=str, default=None, help="Jaw rotation as JSON array [rx, ry, rz]")
     parser.add_argument("--model-path", type=str, default=None, help="Path to FLAME model directory")
+    parser.add_argument("--perspective", action="store_true", help="Use perspective camera")
+    parser.add_argument("--focal-length", type=float, default=50.0, help="Focal length in mm (perspective only)")
+    parser.add_argument("--camera-distance", type=float, default=500.0, help="Camera distance in mm (perspective only)")
     parser.add_argument("--output", type=str, default="output/face.png", help="Output path")
     args = parser.parse_args()
 
@@ -36,6 +39,9 @@ def main():
         expression=expression,
         jaw_pose=jaw_pose,
         model_path=args.model_path,
+        perspective=args.perspective,
+        focal_length=args.focal_length,
+        camera_distance=args.camera_distance,
     )
     img.save(args.output)
     print(f"Saved to {args.output} ({img.width}x{img.height})")

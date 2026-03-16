@@ -8,7 +8,7 @@ from PIL import Image
 from ..eye_model.parameters import EyeParameters, DEFAULT_PARAMS
 from ..face_model.flame_mesh import build_face_mesh
 from ..face_model.composition import compose_face_with_eyes
-from ..rendering.camera import OrthographicCamera
+from ..rendering.camera import OrthographicCamera, PerspectiveCamera
 from ..rendering.composite_renderer import render_composite
 from ..rendering.lighting import PointLight
 
@@ -27,6 +27,9 @@ def render_face(
     viewport_height: float = 250.0,
     bg_color: tuple = (0.15, 0.15, 0.18),
     skin_base_color: Optional[np.ndarray] = None,
+    perspective: bool = False,
+    focal_length: float = 50.0,
+    camera_distance: float = 500.0,
 ) -> Image.Image:
     """Render a full face with physics-based eyeballs.
 
@@ -40,10 +43,13 @@ def render_face(
         eye_params: Physical eye parameters.
         light: Light source. Uses default if None.
         model_path: Path to FLAME model. Uses default if None.
-        viewport_width: Physical viewport width in mm.
-        viewport_height: Physical viewport height in mm.
+        viewport_width: Physical viewport width in mm (orthographic only).
+        viewport_height: Physical viewport height in mm (orthographic only).
         bg_color: Background color RGB (0-1).
         skin_base_color: (3,) skin color override.
+        perspective: If True, use perspective camera instead of orthographic.
+        focal_length: Lens focal length in mm (perspective only).
+        camera_distance: Distance from camera to origin in mm (perspective only).
 
     Returns:
         PIL Image (RGB).
@@ -68,13 +74,28 @@ def render_face(
         )
 
     # Camera
-    res_y = int(resolution * viewport_height / viewport_width)
-    camera = OrthographicCamera(
-        viewport_width=viewport_width,
-        viewport_height=viewport_height,
-        resolution_x=resolution,
-        resolution_y=res_y,
-    )
+    if perspective:
+        # Compute sensor aspect ratio from viewport aspect
+        aspect = viewport_height / viewport_width
+        sensor_w = 36.0  # full-frame sensor width
+        sensor_h = sensor_w * aspect
+        res_y = int(resolution * aspect)
+        camera = PerspectiveCamera(
+            focal_length=focal_length,
+            sensor_width=sensor_w,
+            sensor_height=sensor_h,
+            resolution_x=resolution,
+            resolution_y=res_y,
+            camera_distance=camera_distance,
+        )
+    else:
+        res_y = int(resolution * viewport_height / viewport_width)
+        camera = OrthographicCamera(
+            viewport_width=viewport_width,
+            viewport_height=viewport_height,
+            resolution_x=resolution,
+            resolution_y=res_y,
+        )
 
     rays = camera.generate_rays()
 

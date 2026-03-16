@@ -8,6 +8,7 @@ from ..pipeline.single_eye import render_single_eye
 from ..eye_model.parameters import DEFAULT_PARAMS
 from .iris_displacement import measure_iris_displacement
 from .expected_curves import displacement_curves, naive_displacement, refraction_corrected_displacement
+from .face_validation import run_face_validation
 
 
 def run_validation(
