@@ -34,7 +34,7 @@ def limbus_darkening(
     angular_dist = np.abs(angle - limbus_half_angle)
     linear_dist = angular_dist * cornea_radius  # approximate arc length in mm
 
-    # Smooth darkening
-    darkening = 0.4 * np.exp(-(linear_dist**2) / (2 * (width_mm * 0.4)**2))
+    # Gentle darkening with wider falloff
+    darkening = 0.15 * np.exp(-(linear_dist**2) / (2 * (width_mm * 0.8)**2))
 
     return 1.0 - darkening

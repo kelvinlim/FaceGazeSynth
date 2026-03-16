@@ -73,12 +73,11 @@ def render_stereo_pair(
     if theta_h_deg != 0.0 or theta_v_deg != 0.0:
         geom_right = rotate_eye(geom_right, theta_h_deg, theta_v_deg)
 
-    # Left eye is mirror image, then shifted
+    # Left eye: mirror first (left-eye anatomy), then rotate for conjugate gaze
     geom_left = build_geometry(params)
-    if theta_h_deg != 0.0 or theta_v_deg != 0.0:
-        # Mirror the gaze angle for conjugate gaze (both eyes look same direction)
-        geom_left = rotate_eye(geom_left, theta_h_deg, theta_v_deg)
     geom_left = _mirror_geometry(geom_left)
+    if theta_h_deg != 0.0 or theta_v_deg != 0.0:
+        geom_left = rotate_eye(geom_left, theta_h_deg, theta_v_deg)
 
     # Shift eyes to their positions
     def shift_geom(geom, dx):

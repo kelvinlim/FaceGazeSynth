@@ -45,8 +45,19 @@ The renderer traces rays through a composite eyeball geometry with corneal refra
 
 **Key physics simplification:** Single-surface Gullstrand model — cornea treated as one refracting surface (air n=1.0 → aqueous n=1.336), ignoring 0.5mm cornea thickness.
 
-**Phase 2 — Face Integration (in progress)**
-Embed eyeballs into FLAME 2023 Open parametric face mesh. See `PLAN.md` for full implementation plan.
+**Phase 2 — Face Integration (implemented)**
+
+Embeds physics-based eyeballs into a FLAME 2023 Open parametric face mesh:
+
+- `facegazesynth/face_model/` — FLAME mesh loading and eye-face composition. `flame_mesh.py` wraps smplx, removes FLAME's eyeball submeshes (connected component analysis), extracts eye joint positions, converts m→mm. `composition.py` positions two `EyeballGeometry` instances at FLAME eye joints with correct mirroring and conjugate gaze rotation.
+
+- `facegazesynth/rendering/composite_renderer.py` — Depth-buffer compositing: traces rays against face mesh (trimesh) and both eyes (render_eye with return_depth), keeps nearest hit. Eye regions get NxN supersampling for anti-aliased iris/sclera detail.
+
+- `facegazesynth/materials/skin.py` — Lambertian diffuse skin shader with barycentric-interpolated smooth normals and subtle position-based color variation.
+
+- `facegazesynth/pipeline/face_render.py` — High-level `render_face()` and `render_face_sweep()`.
+
+- `scripts/render_face.py`, `scripts/render_face_sweep.py` — CLI entry points.
 
 **FLAME model setup:** Model files live in `models/flame2023/`. The directory structure expected by `smplx`:
 ```

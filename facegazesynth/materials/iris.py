@@ -58,17 +58,19 @@ def iris_color_at(
 
     # --- Collarette ring ---
     # At about 40% of iris width from pupil (r_norm ~ 0.4)
+    # Broad, subtle brightening — not a sharp ring
     collarette_pos = 0.4
-    collarette = np.exp(-((r_norm - collarette_pos) ** 2) / (2 * 0.02**2))
-    intensity += 0.15 * collarette
+    collarette = np.exp(-((r_norm - collarette_pos) ** 2) / (2 * 0.06**2))
+    intensity += 0.06 * collarette
 
     # --- Pupillary zone (inner) is slightly darker ---
     inner_dark = np.exp(-(r_norm**2) / (2 * 0.15**2))
     intensity -= 0.1 * inner_dark
 
     # --- Limbal darkening (outer edge) ---
-    limbal = np.clip((r_norm - 0.85) / 0.15, 0.0, 1.0)
-    intensity -= 0.4 * limbal
+    # Gradual fade, not a sharp cutoff
+    limbal = np.clip((r_norm - 0.7) / 0.3, 0.0, 1.0)
+    intensity -= 0.2 * limbal ** 2
 
     # --- Crypts (scattered dark spots) ---
     # Use deterministic hash for reproducibility

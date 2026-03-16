@@ -34,6 +34,7 @@ def render_eye(
     sclera_color: tuple = (0.94, 0.92, 0.88),
     iris_color: tuple = (0.45, 0.28, 0.12),
     bg_color: tuple = (0.15, 0.15, 0.18),
+    return_depth: bool = False,
 ) -> np.ndarray:
     """Render an eyeball for a batch of rays.
 
@@ -48,9 +49,11 @@ def render_eye(
         sclera_color: RGB tuple (0-1) for sclera (flat shading only).
         iris_color: RGB tuple (0-1) for iris (flat shading only).
         bg_color: RGB tuple (0-1) for background.
+        return_depth: If True, return (colors, depths) tuple.
 
     Returns:
-        (N, 3) RGB colors in [0, 1].
+        (N, 3) RGB colors in [0, 1]. If return_depth=True, returns
+        (colors, depths) where depths is (N,) with np.inf for misses.
     """
     n = len(ray_origins)
     colors = np.tile(np.array(bg_color), (n, 1))
@@ -141,29 +144,26 @@ def render_eye(
 
         # Cornea cap hits that didn't reach iris/pupil → show sclera behind
         # (ray passed through cornea but missed the iris)
+        # Use the cornea t for depth ordering, but defer shading to the
+        # sclera intersection below so normals/hit points are consistent
+        # with the rest of the sclera surface (avoids a lighting seam at
+        # the limbus boundary).
         cornea_no_iris = cap_mask & ~iris_hit_mask & ~pupil_hit_mask
-        if np.any(cornea_no_iris):
-            t_c = t_cornea[cornea_no_iris]
-            closer = t_c < best_t[cornea_no_iris]
-            idx = np.where(cornea_no_iris)[0][closer]
-            surface_id[idx] = SURFACE_SCLERA
-            best_t[idx] = t_c[closer]
-            hit_points[idx] = hp_cornea[cornea_no_iris][closer]
-            hit_normals[idx] = n_cornea[cornea_no_iris][closer]
 
     # --- Step 3: Test sclera sphere (excluding cornea cap region) ---
     t_sclera, hp_sclera, n_sclera, mask_sclera = intersect_ray_sphere(
         ray_origins, ray_dirs, geom.sclera_center, geom.sclera_radius
     )
 
-    # Exclude sclera hits where the ray already hit the cornea cap
-    # (the cornea cap replaces that portion of the sclera surface).
-    # A ray that hit the cornea cap should not also show sclera at that pixel,
-    # unless the sclera hit is closer (which shouldn't happen geometrically).
+    # Exclude sclera hits where the ray hit the cornea cap AND reached the
+    # iris/pupil (those pixels are already resolved). But allow sclera hits
+    # for cornea-cap rays that missed the iris — these show the sclera
+    # visible through the cornea, and should use sclera normals for
+    # consistent lighting across the limbus boundary.
     if np.any(mask_sclera):
-        # Sclera hit is invalid if this ray also hit the cornea cap in front
-        sclera_occluded_by_cornea = cap_mask & mask_sclera & (t_cornea <= t_sclera)
-        valid_sclera = mask_sclera & ~sclera_occluded_by_cornea
+        already_resolved = cap_mask & (iris_hit_mask | pupil_hit_mask)
+        sclera_occluded = already_resolved & mask_sclera & (t_cornea <= t_sclera)
+        valid_sclera = mask_sclera & ~sclera_occluded
 
         if np.any(valid_sclera):
             t_s = t_sclera[valid_sclera]
@@ -191,4 +191,6 @@ def render_eye(
             geom, light, bg_color=np.array(bg_color),
         )
 
+    if return_depth:
+        return colors, best_t
     return colors

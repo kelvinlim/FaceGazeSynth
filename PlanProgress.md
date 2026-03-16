@@ -40,16 +40,24 @@
 | # | Milestone | Status | Completed |
 |---|-----------|--------|-----------|
 | 2.0 | FLAME model setup (download, smplx integration, landmark embedding) | Done | 2026-03-15 |
-| 2.1 | Dependencies & face_model module (smplx, trimesh, torch) | Not started | — |
-| 2.2 | FLAME mesh loader (build_face_mesh, eyeball vertex removal, eye joints) | Not started | — |
-| 2.3 | Eye-face composition (position eyeballs at FLAME eye joints) | Not started | — |
-| 2.4 | Face material / skin shader (Lambertian diffuse, smooth shading) | Not started | — |
-| 2.5 | Composite renderer (depth-buffer ray tracing: face mesh + eyes) | Not started | — |
-| 2.6 | Face rendering pipeline (render_face, render_face_sweep) | Not started | — |
+| 2.1 | Dependencies & face_model module (smplx, trimesh, torch, rtree) | Done | 2026-03-15 |
+| 2.2 | FLAME mesh loader (build_face_mesh, eyeball vertex removal, eye joints) | Done | 2026-03-15 |
+| 2.3 | Eye-face composition (position eyeballs at FLAME eye joints) | Done | 2026-03-15 |
+| 2.4 | Face material / skin shader (Lambertian diffuse, smooth shading) | Done | 2026-03-15 |
+| 2.5 | Composite renderer (depth-buffer ray tracing: face mesh + eyes) | Done | 2026-03-15 |
+| 2.6 | Face rendering pipeline (render_face, render_face_sweep) | Done | 2026-03-15 |
 | 2.7 | Perspective camera (optional, alongside existing orthographic) | Not started | — |
-| 2.8 | Tests (mesh loading, eye positioning, composite rendering, validation) | Not started | — |
-| 2.9 | CLI scripts (render_face.py, render_face_sweep.py) | Not started | — |
+| 2.8 | Tests (mesh loading, eye positioning, composite rendering: 53 total) | Done | 2026-03-15 |
+| 2.9 | CLI scripts (render_face.py, render_face_sweep.py) | Done | 2026-03-15 |
 | 2.10 | Update validation for face-context renders | Not started | — |
+
+### Key Results
+- Full face renders with FLAME 2023 Open mesh + physics-based eyeballs at 512px
+- Conjugate gaze: both eyes rotate in the same world-space direction
+- Eye-region 4x4 supersampling for smooth iris/sclera detail
+- Cornea cap boundary seam fixed (sclera normals used consistently across limbus)
+- Iris collarette and limbus darkening softened to remove artifactual rings
+- 53 tests passing (33 Phase 1 + 15 face model + 5 composite renderer)
 
 ### Setup Notes
 - Using FLAME 2023 Open (CC-BY-4.0) — model files in `models/flame2023/`
