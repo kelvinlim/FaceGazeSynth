@@ -39,6 +39,15 @@ FaceGazeSynth is a synthetic face generation system that produces realistic eye 
 # Generate batch: 5 identities × 5 emotions × 3 gaze angles
 .venv/bin/python scripts/generate_batch.py --n-identities 5 --resolution 256
 
+# Redirect gaze in a real photo (single angle)
+.venv/bin/python scripts/redirect_gaze.py --input samples/Dean_Center.png --angle 15
+
+# Redirect gaze sweep (full series with labels)
+.venv/bin/python scripts/redirect_gaze.py --input samples/Dean_Center.png --sweep
+
+# Batch redirect all sample photos
+.venv/bin/python scripts/redirect_gaze.py --batch --input-dir samples --output-dir output/redirected
+
 # Run validation suite (iris displacement vs. theory)
 .venv/bin/python scripts/validate.py --diagnostics
 
@@ -104,6 +113,28 @@ Load with: `smplx.create(model_path='models/flame2023', model_type='flame')` →
 - `facegazesynth/pipeline/batch.py` — Batch generation: identity × emotion × gaze combinations with JSON manifest. `scripts/generate_batch.py` CLI.
 
 **Albedo model:** `models/flame2023/albedoModel2020_FLAME_albedoPart.npz` (1.7GB, from AlbedoMM CVPR 2020, academic license). 512×512 texture space, 145 PCA components for diffuse + specular albedo.
+
+**Phase 4 — Physics-Guided Gaze Redirection on Real Photos (implemented)**
+
+Takes real headshot photos and redirects gaze to target angles using the same corneal refraction physics:
+
+- `facegazesynth/redirection/detection.py` — MediaPipe FaceLandmarker (478 landmarks with iris) for eye/iris detection. Returns iris center, radius, eyelid contours, eye corners.
+
+- `facegazesynth/redirection/physics_mapping.py` — Bridges physics and pixel space. Calibrates mm_per_pixel from detected iris size (accounting for corneal magnification), converts `refraction_corrected_displacement()` to pixel displacement.
+
+- `facegazesynth/redirection/warping.py` — Iris region warping with cosine foreshortening. Uses `cv2.remap()` with soft alpha blending falloff.
+
+- `facegazesynth/redirection/inpainting.py` — Fills exposed sclera when iris moves, using `cv2.inpaint()` (Telea method).
+
+- `facegazesynth/redirection/specular.py` — Detects and repositions corneal specular highlight (Purkinje image) based on corneal geometry.
+
+- `facegazesynth/redirection/compositing.py` — Orchestrates single-eye and both-eye redirection (warp → inpaint → specular).
+
+- `facegazesynth/pipeline/redirect.py` — High-level: `redirect_gaze()`, `redirect_gaze_sweep()`, `redirect_batch()`. Batch processes all photos in a directory with JSON manifest.
+
+- `facegazesynth/validation/redirect_validation.py` — Round-trip validation: redirect → re-detect → measure displacement vs. physics prediction. RMS 0.674mm (PASS, threshold 1.0mm).
+
+**MediaPipe model:** `models/face_landmarker.task` (3.7MB, downloaded from Google). Required for iris landmark detection.
 
 ## Key Physics
 

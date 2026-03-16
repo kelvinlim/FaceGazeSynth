@@ -87,3 +87,24 @@
 - Gaze calibration RMS 0.26mm even with large expression deformation (surprised)
 - Batch pipeline generates identity × emotion × gaze grid with manifest.json
 - 68 tests passing (33 Phase 1 + 20 Phase 2 + 15 Phase 3)
+
+## Phase 4 — Physics-Guided Gaze Redirection on Real Photos
+
+**Status: Complete**
+
+| # | Milestone | Status | Completed |
+|---|-----------|--------|-----------|
+| 4.1 | MediaPipe eye/iris detection (478 landmarks) | Done | 2026-03-16 |
+| 4.2 | Physics-to-pixel mapping (corneal magnification calibration) | Done | 2026-03-16 |
+| 4.3 | Iris warping with cosine foreshortening | Done | 2026-03-16 |
+| 4.4 | Sclera inpainting (Telea method) | Done | 2026-03-16 |
+| 4.5 | Specular highlight (Purkinje image) repositioning | Done | 2026-03-16 |
+| 4.6 | Compositing pipeline (warp → inpaint → specular) | Done | 2026-03-16 |
+| 4.7 | Batch processing (6 identities × 9 angles) with CLI | Done | 2026-03-16 |
+| 4.8 | Round-trip validation (RMS 0.674mm, threshold 1.0mm) | Done | 2026-03-16 |
+
+### Key Results
+- 6 real headshot photos redirected to 9 gaze angles each (±5°, ±10°, ±15°, ±20°)
+- Physics-accurate iris displacement via `refraction_corrected_displacement()`
+- Round-trip validation RMS 0.674mm (PASS)
+- 82 tests passing (33 Phase 1 + 20 Phase 2 + 15 Phase 3 + 14 Phase 4)

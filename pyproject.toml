@@ -16,6 +16,8 @@ dependencies = [
     "trimesh>=4.0",
     "rtree>=1.0",
     "torch>=2.0",
+    "mediapipe>=0.10",
+    "opencv-python>=4.8",
 ]
 
 [project.optional-dependencies]
