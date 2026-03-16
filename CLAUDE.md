@@ -69,7 +69,11 @@ Embeds physics-based eyeballs into a FLAME 2023 Open parametric face mesh:
 
 - `facegazesynth/pipeline/face_render.py` — High-level `render_face()` and `render_face_sweep()`.
 
-- `scripts/render_face.py`, `scripts/render_face_sweep.py` — CLI entry points.
+- `facegazesynth/rendering/camera.py` — `OrthographicCamera` and `PerspectiveCamera` (focal length, sensor size, camera distance). Both implement `generate_rays() → Ray` and `mm_per_pixel()`.
+
+- `facegazesynth/validation/face_validation.py` — Face-context iris displacement validation: renders eyes within the face mesh, crops right eye region, measures displacement vs. theory. RMS 0.381mm (PASS).
+
+- `scripts/render_face.py`, `scripts/render_face_sweep.py` — CLI entry points. `--perspective` flag for perspective camera.
 
 **FLAME model setup:** Model files live in `models/flame2023/`. The directory structure expected by `smplx`:
 ```
