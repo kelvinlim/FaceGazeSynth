@@ -6,7 +6,6 @@ import numpy as np
 from .detection import EyeDetection, FaceDetection
 from .physics_mapping import GazeMapping, calibrate_eye, target_displacement_px
 from .warping import warp_eye_region, eyelid_mask
-from .inpainting import inpaint_sclera
 from .specular import reposition_specular
 from ..eye_model.parameters import EyeParameters, DEFAULT_PARAMS
 
@@ -19,7 +18,9 @@ def redirect_single_eye(
 ) -> np.ndarray:
     """Redirect gaze for a single eye.
 
-    Runs the full pipeline: warp → inpaint sclera → reposition specular.
+    Uses extract-inpaint-paste: the warping step internally inpaints the
+    old iris region with sclera, then composites the iris at the new
+    position. Specular highlight is repositioned afterwards.
 
     Args:
         image: (H, W, 3) uint8 RGB image.
@@ -36,13 +37,10 @@ def redirect_single_eye(
     mapping = calibrate_eye(detection, params)
     disp_px = target_displacement_px(angle_deg, mapping, params)
 
-    # Warp iris
+    # Extract-inpaint-paste (warping handles sclera inpainting internally)
     result, eye_m, old_iris_m, new_iris_m = warp_eye_region(
         image, detection, disp_px, angle_deg
     )
-
-    # Inpaint exposed sclera
-    result = inpaint_sclera(result, old_iris_m, new_iris_m, eye_m)
 
     # Reposition specular highlight
     result = reposition_specular(result, detection, angle_deg, mapping, eye_m, params)
